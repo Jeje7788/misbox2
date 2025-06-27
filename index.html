@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mystery Box</title>
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
+        import { getDatabase, ref, get, push, set } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js';
+
+        // Inisialisasi Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyB4Hjv-OXkZGuvn7KQHYM7p6osiEypbxrE",
+            authDomain: "misbox2-936cc.firebaseapp.com",
+            projectId: "misbox2-936cc",
+            storageBucket: "misbox2-936cc.firebasestorage.app",
+            messagingSenderId: "676592240263",
+            appId: "1:676592240263:web:32abff54fc5d49423eda22"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app, "https://misbox2-936cc-default-rtdb.asia-southeast1.firebasedatabase.app/");
+
+window.openBox = function () {
+  const username = document.getElementById('username').value.trim();
+  if (!username) {
+    alert('Silakan masukkan username terlebih dahulu!');
+    return;
+  }
+
+  const box = document.querySelector('.box');
+  const reward = document.getElementById('reward');
+
+  // Tambah animasi getar
+  box.classList.add('shake');
+  setTimeout(() => {
+    box.classList.remove('shake');
+  }, 400); // sama dengan durasi animasi shake
+
+  // Ambil hadiah dari Firebase
+  get(ref(db, 'userRewards/' + username)).then(snapshot => {
+    let rewardText;
+    const userReward = snapshot.val();
+    if (!userReward) {
+      rewardText = 'Maaf, tidak ada hadiah untuk username ini!';
+    } else {
+      rewardText = userReward.reward;
+    }
+
+    // Simpan riwayat ke Firebase
+    const rewardDataRef = ref(db, 'rewardData');
+    push(rewardDataRef, { username, reward: rewardText });
+
+    box.style.display = 'none';
+    reward.style.display = 'block';
+    reward.textContent = `${username}, ${rewardText}`;
+  }).catch(error => {
+    console.error('Error:', error);
+    alert('Terjadi kesalahan saat mengambil hadiah!');
+  });
+};
+
+    </script>
+    <style>
+body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #f5d300, #ff00cc);
+    background-size: 400% 400%;
+    animation: gradientFlow 10s ease infinite;
+}
+
+@keyframes gradientFlow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.username-container {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.username-input {
+    padding: 10px;
+    font-size: 16px;
+    border: 2px solid #333;
+    border-radius: 5px;
+    width: 220px;
+}
+
+.box {
+    width: 200px;
+    height: 200px;
+    background: #ffe100;
+    border: 5px solid #333;
+    border-radius: 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.3s, box-shadow 0.3s;
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+    box-shadow: 0 0 20px #fff176, 0 0 30px #ff9800;
+}
+
+.box:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 25px #ff0, 0 0 35px #ffa500;
+}
+
+.reward {
+    display: none;
+    font-size: 28px;
+    color: #e60000;
+    text-align: center;
+    margin-top: 25px;
+    animation: fadeIn 1s ease-in;
+    font-weight: bold;
+    text-shadow: 1px 1px 3px #fff;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.shake {
+    animation: shake 0.4s ease;
+}
+
+@keyframes shake {
+    0% { transform: translate(0, 0); }
+    20% { transform: translate(-5px, 0); }
+    40% { transform: translate(5px, 0); }
+    60% { transform: translate(-5px, 0); }
+    80% { transform: translate(5px, 0); }
+    100% { transform: translate(0, 0); }
+}
+
+    </style>
+</head>
+<body>
+    <div class="username-container">
+        <input type="text" class="username-input" id="username" placeholder="Masukkan Username">
+    </div>
+    <div class="box" onclick="openBox()">Mystery Box JeJe</div>
+    <div class="reward" id="reward"></div>
+</body>
+</html>
