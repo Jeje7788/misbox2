@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - Mystery Box</title>
+  <script type="module">
+    // Import Modular Firebase
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+    import { getDatabase, ref, onValue, get, set, remove } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+
+    // Konfigurasi Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyB4Hjv-OXkZGuvn7KQHYM7p6osiEypbxrE",
+      authDomain: "misbox2-936cc.firebaseapp.com",
+      projectId: "misbox2-936cc",
+      storageBucket: "misbox2-936cc.appspot.com",
+      messagingSenderId: "676592240263",
+      appId: "1:676592240263:web:32abff54fc5d49423eda22"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app, "https://misbox2-936cc-default-rtdb.asia-southeast1.firebasedatabase.app/");
+
+    // Tambah hadiah per username
+    window.addUserReward = async function () {
+      const username = document.getElementById("newUsername").value.trim();
+      const reward = document.getElementById("newReward").value.trim();
+      if (!username || !reward) {
+        alert("Silakan masukkan username dan hadiah!");
+        return;
+      }
+
+      const userRef = ref(db, "userRewards/" + username);
+      const snapshot = await get(userRef);
+      if (snapshot.exists()) {
+        alert("Username sudah memiliki hadiah! Hapus dulu untuk mengganti.");
+        return;
+      }
+
+      await set(userRef, { reward });
+      document.getElementById("newUsername").value = "";
+      document.getElementById("newReward").value = "";
+      alert("Hadiah berhasil ditambahkan!");
+    };
+
+    // Hapus hadiah
+    window.deleteUserReward = async function (username) {
+      if (confirm("Apakah Anda yakin ingin menghapus hadiah ini?")) {
+        const refDel = ref(db, "userRewards/" + username);
+        await remove(refDel);
+        alert("Hadiah berhasil dihapus!");
+      }
+    };
+
+    // Tampilkan userRewards
+    function loadUserRewards() {
+      const userRef = ref(db, "userRewards");
+      onValue(userRef, (snapshot) => {
+        const data = snapshot.val() || {};
+        const list = document.getElementById("rewardList");
+        list.innerHTML = "";
+        for (const username in data) {
+          const div = document.createElement("div");
+          div.className = "reward-item";
+          div.innerHTML = `
+            <span>${username}: ${data[username].reward}</span>
+            <button class="delete-reward-btn" onclick="deleteUserReward('${username}')">Hapus</button>
+          `;
+          list.appendChild(div);
+        }
+      });
+    }
+
+    // Tampilkan history
+    function loadRewardHistory() {
+      const historyRef = ref(db, "rewardData");
+      onValue(historyRef, (snapshot) => {
+        const data = snapshot.val() || {};
+        const tbody = document.getElementById("rewardHistory");
+        tbody.innerHTML = "";
+        for (const id in data) {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${data[id].username}</td>
+            <td>${data[id].reward}</td>
+          `;
+          tbody.appendChild(tr);
+        }
+      });
+    }
+
+    // Hapus semua reward history
+    window.clearData = async function () {
+      if (confirm("Apakah Anda yakin ingin menghapus semua data pemenang?")) {
+        await remove(ref(db, "rewardData"));
+        alert("Data pemenang berhasil dihapus!");
+      }
+    };
+
+    // Jalankan saat halaman dimuat
+    window.onload = function () {
+      loadUserRewards();
+      loadRewardHistory();
+    };
+  </script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f0f0f0;
+    }
+    h1, h2 {
+      text-align: center;
+      color: #333;
+    }
+    .reward-form {
+      max-width: 600px;
+      margin: 20px auto;
+      text-align: center;
+    }
+    .reward-input, .username-input {
+      padding: 10px;
+      font-size: 16px;
+      border: 2px solid #333;
+      border-radius: 5px;
+      width: 35%;
+      margin-right: 10px;
+    }
+    .add-btn {
+      padding: 10px 20px;
+      background-color: #28a745;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    .add-btn:hover {
+      background-color: #218838;
+    }
+    table {
+      width: 100%;
+      max-width: 600px;
+      margin: 20px auto;
+      border-collapse: collapse;
+      background-color: #fff;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    th, td {
+      padding: 10px;
+      text-align: left;
+      border: 1px solid #ddd;
+    }
+    th {
+      background-color: #ffcc00;
+      color: #333;
+    }
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    .clear-btn {
+      display: block;
+      margin: 20px auto;
+      padding: 10px 20px;
+      background-color: #d00000;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    .clear-btn:hover {
+      background-color: #b00000;
+    }
+    .reward-list {
+      max-width: 600px;
+      margin: 20px auto;
+      background-color: #fff;
+      padding: 10px;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .reward-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px;
+      border-bottom: 1px solid #ddd;
+    }
+    .delete-reward-btn {
+      background-color: #d00000;
+      color: #fff;
+      border: none;
+      border-radius: 3px;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+    .delete-reward-btn:hover {
+      background-color: #b00000;
+    }
+  </style>
+</head>
+<body>
+  <h1>Admin Dashboard - Mystery Box</h1>
+
+  <h2>Tentukan Hadiah per Username</h2>
+  <div class="reward-form">
+    <input type="text" class="username-input" id="newUsername" placeholder="Masukkan Username">
+    <input type="text" class="reward-input" id="newReward" placeholder="Masukkan Hadiah">
+    <button class="add-btn" onclick="addUserReward()">Tambah Hadiah</button>
+  </div>
+  <div class="reward-list" id="rewardList"></div>
+
+  <h2>Daftar Pemenang</h2>
+  <table id="rewardTable">
+    <thead>
+      <tr>
+        <th>Username</th>
+        <th>Hadiah</th>
+      </tr>
+    </thead>
+    <tbody id="rewardHistory"></tbody>
+  </table>
+  <button class="clear-btn" onclick="clearData()">Hapus Semua Data Pemenang</button>
+</body>
+</html>
